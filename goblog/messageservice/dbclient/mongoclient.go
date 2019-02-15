@@ -44,28 +44,28 @@ func (mc *MongoClient) ensureIndex() {
 	}
 }
 
-func (mc *MongoClient) GetTopics() ([]model.Message, error) {
+func (mc *MongoClient) GetTopics() ([]model.Topic, error) {
 
 	session := mc.session.Copy()
 
-	c := session.DB("store").C("messages")
+	c := session.DB("store").C("topics")
 
-	var messages []model.Message
-	error := c.Find(bson.M{}).All(&messages)
+	var topics []model.Topic
+	error := c.Find(bson.M{}).All(&topics)
 
-	return messages, error
+	return topics, error
 
 }
 
-func (mc *MongoClient) AddMessage(message model.Message) error {
+func (mc *MongoClient) AddTopic(topic model.Topic) error {
 
 	session := mc.session.Copy()
 	defer session.Close()
 
-	message.Id = xid.New().String()
-	c := session.DB("store").C("messages")
+	topic.Id = xid.New().String()
+	c := session.DB("store").C("topics")
 
-	err := c.Insert(message)
+	err := c.Insert(topic)
 
 	return err
 }

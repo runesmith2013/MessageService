@@ -17,6 +17,7 @@ func main() {
 
 func intitializeMongoClient() {
 	service.DBClient = dbclient.KafkaClient{}
+	go service.DBClient.Connect()
 	//service.DBClient.OpenMongoDb()
 
 }

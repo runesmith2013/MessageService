@@ -7,16 +7,14 @@ import (
 	"github.com/segmentio/kafka-go"
 	"messageservice/goblog/messageservice/model"
 	"strconv"
-	"time"
 )
 
-type KafkaClient struct{}
+type KafkaClient struct {
+	messages []model.Message
+}
 
-func (kc *KafkaClient) Connect() {}
-
-func (kc *KafkaClient) GetMessages() ([]model.Message, error) {
-
-	messages := make([]model.Message, 0)
+func (kc *KafkaClient) Connect() {
+	kc.messages = make([]model.Message, 0)
 
 	// make a new reader that consumes from topic-A, partition 0, at offset 42
 	r := kafka.NewReader(kafka.ReaderConfig{
@@ -26,17 +24,23 @@ func (kc *KafkaClient) GetMessages() ([]model.Message, error) {
 		MinBytes:  10e3, // 10KB
 		MaxBytes:  10e6, // 10MB
 	})
+
 	r.SetOffset(1)
+	fmt.Println("Length of queue", r.Stats().QueueLength)
 
-	var error error = nil
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	for {
 
-		m, err := r.ReadMessage(ctx)
+		m, err := r.ReadMessage(context.Background())
 		message := model.Message{}
 		json.Unmarshal(m.Value, &message)
-		messages = append(messages, message)
+		kc.messages = append(kc.messages, message)
+
+		fmt.Println("Length of messages: ", len(kc.messages))
+
+		if len(kc.messages) > 10 {
+			kc.messages = kc.messages[1:len(kc.messages)]
+
+		}
 
 		if err != nil {
 			//error = err
@@ -47,7 +51,11 @@ func (kc *KafkaClient) GetMessages() ([]model.Message, error) {
 
 	r.Close()
 
-	return messages, error
+}
+
+func (kc *KafkaClient) GetMessages() ([]model.Message, error) {
+
+	return kc.messages, nil
 
 }
 

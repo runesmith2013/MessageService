@@ -11,6 +11,7 @@ import (
 
 type KafkaClient struct {
 	messages []model.Message
+	offset   int64
 }
 
 func (kc *KafkaClient) Connect() {
@@ -25,8 +26,7 @@ func (kc *KafkaClient) Connect() {
 		MaxBytes:  10e6, // 10MB
 	})
 
-	r.SetOffset(1)
-	fmt.Println("Length of queue", r.Stats().QueueLength)
+	r.SetOffset(kc.offset)
 
 	for {
 

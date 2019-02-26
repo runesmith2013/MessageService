@@ -19,16 +19,16 @@ var routes = Routes{
 
 	Route{
 		"GetMessages", // Name
-		"GET",         // HTTP method
+		"POST",        // HTTP method
 		"/messages",
-		GetAllMessages, // Route pattern
+		AddMessageToTopic, // Route pattern
 
 	},
 	Route{
-		"GetMessages", // Name
-		"POST",        // HTTP method
-		"/messages",
-		AddMessage, // Route pattern
+		"GetMessagesByTopic", // Name
+		"GET",                // HTTP method
+		"/messages/{topic}",
+		GetMessagesByTopic, // Route pattern
 
 	},
 }

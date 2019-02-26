@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"messageservice/goblog/messageservice/dbclient"
 
 	"log"
@@ -11,7 +12,7 @@ import (
 	"net/http"
 )
 
-var DBClient dbclient.KafkaClient
+var KafkaClients = make(map[string]*dbclient.KafkaClient)
 
 func responseWithJSON(w http.ResponseWriter, json []byte, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -25,10 +26,15 @@ func errorWithJSON(w http.ResponseWriter, message string, code int) {
 	fmt.Fprintf(w, "{message: %q}", message)
 }
 
-func GetAllMessages(w http.ResponseWriter, r *http.Request) {
+func GetMessagesByTopic(w http.ResponseWriter, r *http.Request) {
 
-	// Read the message struct
-	messages, err := DBClient.GetMessages()
+	vars := mux.Vars(r)
+	topic := vars["topic"]
+
+	fmt.Println()
+
+	client := KafkaClients[topic]
+	messages, err := client.GetMessages()
 
 	if err != nil {
 		errorWithJSON(w, "Database error", http.StatusInternalServerError)
@@ -46,7 +52,7 @@ func GetAllMessages(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AddMessage(w http.ResponseWriter, r *http.Request) {
+func AddMessageToTopic(w http.ResponseWriter, r *http.Request) {
 
 	var message model.Message
 	decoder := json.NewDecoder(r.Body)
@@ -57,10 +63,12 @@ func AddMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = DBClient.AddMessage(message)
+	topic := message.Topic
+	client := KafkaClients[topic]
+	err = client.AddMessage(message)
 	if err != nil {
 		errorWithJSON(w, "Database error", http.StatusInternalServerError)
-		log.Println("Failed get all messages: ", err)
+		log.Println("Failed to write messages: ", err)
 		return
 	}
 
